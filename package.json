@@ -1,0 +1,28 @@
+{
+  "name": "gen_game_js",
+  "version": "1.0.0",
+  "description": "GenGame JavaScript client",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/f4th4n/gen_game_js.git"
+  },
+  "keywords": [
+    "game",
+    "dev",
+    "distributed",
+    "elixir"
+  ],
+  "author": "Wildan Fathan",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/f4th4n/gen_game_js/issues"
+  },
+  "homepage": "https://github.com/f4th4n/gen_game_js#readme",
+  "dependencies": {
+    "phoenix": "^1.7.14"
+  }
+}

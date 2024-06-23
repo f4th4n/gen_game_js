@@ -1,5 +1,5 @@
 {
-  "name": "gen_game_js",
+  "name": "gen_game_client_js",
   "version": "1.0.0",
   "description": "GenGame JavaScript client",
   "main": "index.js",

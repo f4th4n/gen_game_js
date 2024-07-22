@@ -1,8 +1,9 @@
 {
-  "name": "gen_game_client_js",
-  "version": "1.0.0",
+  "name": "gen_game_js",
+  "version": "1.0.1",
   "description": "GenGame JavaScript client",
-  "main": "index.js",
+  "main": "src/main.ts",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -24,5 +25,8 @@
   "homepage": "https://github.com/f4th4n/gen_game_js#readme",
   "dependencies": {
     "phoenix": "^1.7.14"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.3"
   }
 }

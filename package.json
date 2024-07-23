@@ -4,9 +4,11 @@
   "description": "GenGame JavaScript client",
   "main": "src/main.ts",
   "scripts": {
-    "watch": "webpack --config webpack.config.js --watch",
+    "build": "webpack --config config/webpack.config.js",
+    "watch": "webpack --watch --config config/webpack.config.js",
+    "dist": "webpack --config config/webpack.dist.config.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "example": "npx webpack --config webpack.config.js && npx http-server -o /example.html"
+    "example": "http-server -o /example.html"
   },
   "repository": {
     "type": "git",
@@ -25,9 +27,13 @@
   },
   "homepage": "https://github.com/f4th4n/gen_game_js",
   "devDependencies": {
+    "clean-webpack-plugin": "^4.0.0",
+    "http-server": "^14.1.1",
+    "terser-webpack-plugin": "^5.3.10",
     "ts-loader": "^9.5.1",
     "typescript": "^5.5.3",
     "webpack": "^5.93.0",
-    "webpack-cli": "^5.1.4"
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.4"
   }
 }

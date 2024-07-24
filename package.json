@@ -2,10 +2,10 @@
   "name": "gen_game_js",
   "version": "1.0.1",
   "description": "GenGame JavaScript client",
-  "main": "src/main.ts",
+  "main": "dist/gen_game.min.js",
   "scripts": {
     "build": "webpack --config config/webpack.config.js",
-    "watch": "webpack --watch --config config/webpack.config.js",
+    "watch": "npm run build && webpack --watch --config config/webpack.config.js",
     "dist": "webpack --config config/webpack.dist.config.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "example": "http-server -o /example.html"

@@ -35,11 +35,11 @@ module.exports = {
   },
   devServer: {
     static: {
-      directory: path.join(__dirname, 'public'),
+      directory: `${__dirname}/../`,
     },
     liveReload: true,
     port: 9000,
-    open: ['/example.html'],
+    open: ['/dev.html'],
     hot: true,
   },
 }

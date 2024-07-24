@@ -1,5 +1,9 @@
 class GenGame {
   static version = '1.0.1'
+
+  static hello() {
+    console.log('hello')
+  }
 }
 
 // --------------------------------------------------------------------------------- expose

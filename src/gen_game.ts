@@ -5,7 +5,7 @@ import Match from './match'
 class GenGame {
   connection: Connection
 
-  static version = '1.0.1'
+  static version = '1.0.3'
 
   constructor(host: string, port: number) {
     this.connection = new Connection(host, port)

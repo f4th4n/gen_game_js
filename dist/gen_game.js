@@ -28,7 +28,7 @@ var game_default = Game;
 // src/gen_game.ts
 var GenGame = class {
   static {
-    this.version = "1.0.1";
+    this.version = "1.0.3";
   }
   constructor(host, port) {
     this.connection = new connection_default(host, port);

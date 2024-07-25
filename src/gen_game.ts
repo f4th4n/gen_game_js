@@ -1,11 +1,19 @@
-import Client from './client'
+import Connection from './connection'
+import Game from './game'
+import Match from './match'
 
 class GenGame {
+  connection: Connection
+
   static version = '1.0.1'
 
-  static hello(): boolean {
-    console.log('hello')
-    return false
+  constructor(host: string, port: number) {
+    this.connection = new Connection(host, port)
+  }
+
+  async createMatch(): Promise<Match> {
+    const m = await Game.createMatch(this.connection)
+    return m
   }
 }
 
@@ -13,9 +21,8 @@ class GenGame {
 
 if (typeof global != 'undefined') {
   const glob: any = global
-  glob.Client = Client
   glob.GenGame = GenGame
 }
 
-export { Client, GenGame }
+export { GenGame }
 export default GenGame

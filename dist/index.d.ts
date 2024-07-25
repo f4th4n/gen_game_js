@@ -1,13 +1,21 @@
-export declare class Client {
-    greet(): void;
-    static test(): void;
+declare class Connection {
+    host: string;
+    port: number;
+    constructor(host: string, port: number);
+    authenticateDeviceAsync(deviceId: string): void;
 }
 
 declare class GenGame {
+    connection: Connection;
     static version: string;
-    static hello(): boolean;
+    constructor(host: string, port: number);
+    createMatch(): Promise<Match>;
 }
 export { GenGame }
 export default GenGame;
+
+declare interface Match {
+    id: string;
+}
 
 export { }

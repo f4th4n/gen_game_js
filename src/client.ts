@@ -1,10 +1,10 @@
 class Client {
   greet() {
-    console.log('greet...')
+    console.log('from method greet...')
   }
 
   static test() {
-    console.log('greet...')
+    console.log('from static method test...')
   }
 }
 

@@ -3,27 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>GenGame JS Dev</title>
   </head>
   <body>
     <h1>GenGame JS Dev</h1>
-    <script src="build/gen_game.js"></script>
-    <script>
-      const client = new GenGame.client("localhost", 4000);
-
-      // create user and authenticate it
-      await client.authenticateDeviceAsync("dev-123");
-
-      // create match and return GenGame.Game object
-      const game = await client.createMatch();
-
-      // add callback onRelay, called when there is on-relay event
-      game.onRelay += (payload) => {
-          console.log('payload', payload)
-      }
-
-      // dispatch event relay to all player in the same match with some payload
-      await game.relay({ move_x: 110 });
-    </script>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

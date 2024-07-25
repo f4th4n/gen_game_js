@@ -11,9 +11,11 @@ class GenGame {
 
 // --------------------------------------------------------------------------------- expose
 
-const glob: any = global
-glob.Client = Client
-glob.GenGame = GenGame
+if (typeof global != 'undefined') {
+  const glob: any = global
+  glob.Client = Client
+  glob.GenGame = GenGame
+}
 
 export { Client, GenGame }
 export default GenGame

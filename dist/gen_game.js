@@ -1,10 +1,10 @@
 // src/client.ts
 var Client = class {
   greet() {
-    console.log("greet...");
+    console.log("from method greet...");
   }
   static test() {
-    console.log("greet...");
+    console.log("from static method test...");
   }
 };
 var client_default = Client;
@@ -19,9 +19,11 @@ var GenGame = class {
     return false;
   }
 };
-var glob = globalThis;
-glob.Client = client_default;
-glob.GenGame = GenGame;
+if (typeof globalThis != "undefined") {
+  const glob = globalThis;
+  glob.Client = client_default;
+  glob.GenGame = GenGame;
+}
 var gen_game_default = GenGame;
 export {
   client_default as Client,

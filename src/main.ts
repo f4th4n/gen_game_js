@@ -7,10 +7,18 @@ import { GenGame } from './gen_game'
 // //genGame.authenticateDeviceAsync('testestest')
 // genGame.createMatch()
 
-const genGame = new GenGame('localhost', 4000)
+const genGame = new GenGame('localhost', 4000, 'http')
+
+await genGame.connect()
+
+const token = await genGame.authenticateDevice('kopi')
+
+console.log('my token is', token)
 
 const match = await genGame.createMatch()
-console.log('matchmatchmatch', match)
+console.log('match', match)
+
+// console.log('matchmatchmatch', match)
 
 // const client = GenGame.createClient('localhost', 4000)
 

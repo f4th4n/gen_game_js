@@ -25,6 +25,10 @@
   },
   "homepage": "https://github.com/f4th4n/gen_game_js",
   "dependencies": {
+    "@types/phoenix": "^1.6.5",
+    "phoenix": "^1.7.14"
+  },
+  "devDependencies": {
     "@microsoft/api-extractor": "^7.47.3",
     "@types/node": "^20.14.12",
     "esbuild": "^0.23.0",

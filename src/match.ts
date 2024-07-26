@@ -1,5 +1,6 @@
 interface Match {
-  id: string
+  match_id: string
+  query?: any
 }
 
 export default Match

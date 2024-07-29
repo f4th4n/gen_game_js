@@ -28,6 +28,11 @@ class GenGame {
     return Game.createMatch(this.state.connection, this.state)
   }
 
+  async joinMatch(matchId: string): Promise<Match> {
+    // @mutate this.state.match
+    return Game.joinMatch(this.state.connection, this.state, matchId)
+  }
+
   onChangeState(callback: Function) {
     return Game.onChangeState(this.state.connection, this.state.match, callback)
   }

@@ -8,11 +8,41 @@
       body {
         font-family: Arial, sans-serif;
       }
+
+      #messages p {
+        margin: 0;
+      }
+
+      #screen-1 {
+        display: block;
+      }
+
+      #screen-2 {
+        display: none;
+      }
     </style>
   </head>
   <body>
-    <h1>GenGame JS Dev</h1>
-    <div id="app"></div>
+    <h3>GenGame JS Dev</h3>
+    <div id="app">
+      <div id="screen-1">
+        Game room: <input id="match-id" type="text" />
+        <button id="join-game">Join Game</button>
+        <br /><br /><br /><br />
+
+        <button id="create-game">Create new game</button>
+      </div>
+      <div id="screen-2">
+        <h2>Game room: <span id="game-room">...</span></h2>
+        <button id="send-random-msg">Send random message</button>
+        <div id="messages"></div>
+      </div>
+    </div>
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.js"
+      integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+      crossorigin="anonymous"
+    ></script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

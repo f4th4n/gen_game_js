@@ -18,6 +18,17 @@ class Game {
     return resMatch
   }
 
+  static async joinMatch(connection: Connection, genGameState: GenGameState, matchId: string): Promise<Match> {
+    const match: Match = {
+      match_id: matchId,
+    }
+    await this._joinChannel(connection, match)
+
+    genGameState.match = match
+
+    return match
+  }
+
   static async onChangeState(connection: Connection, match: Match | undefined, callback: Function) {
     const { channel } = await this._joinChannel(connection, match)
 

@@ -2,26 +2,38 @@ import Connection from './connection'
 import Game from './game'
 import Match from './match'
 import Session from './session'
+import { GenGameState } from './types'
 
 class GenGame {
-  connection: Connection
+  state: GenGameState
 
   static version = '1.0.3'
 
   constructor(host: string, port: number, protocol: string = 'http') {
-    this.connection = new Connection(host, port, protocol)
+    this.state = {
+      connection: new Connection(host, port, protocol),
+    }
   }
 
   async connect(): Promise<void> {
-    return await Connection.connect(this.connection)
+    return Connection.connect(this.state.connection)
   }
 
-  async authenticateDevice(deviceId: string) {
-    return Session.authenticateDevice(this.connection, deviceId)
+  async authenticateDevice(deviceId: string): Promise<any> {
+    return Session.authenticateDevice(this.state.connection, deviceId)
   }
 
   async createMatch(): Promise<Match> {
-    return await Game.createMatch(this.connection)
+    // @mutate this.state.match
+    return Game.createMatch(this.state.connection, this.state)
+  }
+
+  onChangeState(callback: Function) {
+    return Game.onChangeState(this.state.connection, this.state.match, callback)
+  }
+
+  setState(payload: object) {
+    return Game.setState(this.state.connection, this.state.match, payload)
   }
 }
 

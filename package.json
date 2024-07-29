@@ -1,6 +1,6 @@
 {
   "name": "gen_game_js",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "GenGame JavaScript client",
   "main": "dist/gen_game.js",
   "types": "dist/index.d.ts",

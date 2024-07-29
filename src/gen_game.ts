@@ -7,7 +7,7 @@ import { GenGameState } from './types'
 class GenGame {
   state: GenGameState
 
-  static version = '1.0.3'
+  static version = '1.0.4'
 
   constructor(host: string, port: number, protocol: string = 'http') {
     this.state = {

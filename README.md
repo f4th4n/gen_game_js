@@ -1,6 +1,8 @@
 # GenGame JavaScript
 
-This is JavaScript client library to communicate with GenServer. It can be used for both generic C# project and Unity.
+This is JavaScript client library to communicate with GenServer. It can be used for any project JavaScript based project like PhaserJS, Cocos2d-x, Cocos2 JS, Construct3, Telegram Game, Facebook Instant Game, etc.
+
+If you need client library for Unity or C#, please see [gen_game_unity](https://github.com/f4th4n/gen_game_unity)
 
 ## Installation
 

@@ -23,6 +23,18 @@ class GenGame {
     return Session.authenticateDevice(this.state.connection, deviceId)
   }
 
+  async createAccount(params: { username: string; display_name?: string; [key: string]: any }): Promise<any> {
+    return Session.createAccount(this.state.connection, params)
+  }
+
+  async linkGoogle(token: string): Promise<any> {
+    return Session.linkGoogle(this.state.connection, token)
+  }
+
+  async authenticateGoogle(): Promise<any> {
+    return Session.authenticateGoogle(this.state.connection)
+  }
+
   async createMatch(): Promise<Match> {
     // @mutate this.state.match
     return Game.createMatch(this.state.connection, this.state)

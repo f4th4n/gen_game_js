@@ -26,16 +26,39 @@ class Session {
   static async linkGoogle(connection: Connection, token: string): Promise<any> {
     Connection.guard(connection)
 
-    return Session.oauthPopupFlow(connection, 'google', { link_mode: 'true', token })
+    return Session.oauthFlow(connection, 'google', { link_mode: 'true', token })
+  }
+
+  static async unlinkGoogle(connection: Connection): Promise<any> {
+    Connection.guard(connection)
+    
+    const { channel } = await Connection.joinChannel(connection, 'gen_game', { token: connection.token })
+    const response = await Connection.send(channel, 'unlink_oauth_provider', { provider: 'google' })
+    
+    return response
+  }
+
+  static async getLinkedProviders(connection: Connection): Promise<any> {
+    Connection.guard(connection)
+    
+    const { channel } = await Connection.joinChannel(connection, 'gen_game', { token: connection.token })
+    const response = await Connection.send(channel, 'list_oauth_links', {})
+    
+    return response
   }
 
   static async authenticateGoogle(connection: Connection): Promise<any> {
     Connection.guard(connection)
     
-    return Session.oauthPopupFlow(connection, 'google')
+    return Session.oauthFlow(connection, 'google')
   }
 
-  private static async oauthPopupFlow(connection: Connection, provider: string, params: Record<string, string> = {}): Promise<any> {
+  private static async oauthFlow(connection: Connection, provider: string, params: Record<string, string> = {}): Promise<any> {
+    // Ensure we have a token
+    if (!connection.token) {
+      throw new Error('Connection token is required for OAuth flow')
+    }
+
     // Extract base URL from WebSocket endpoint and construct HTTP OAuth URL
     const wsUrl = connection.socket.endPointURL()
     console.log('WebSocket URL:', wsUrl)
@@ -52,61 +75,55 @@ class Session {
     
     console.log('Extracted base URL:', baseUrl)
     
+    // Add the current token to params for PubSub notification
+    const allParams = { ...params, token: connection.token }
+    
     // Construct HTTP URL for OAuth endpoint
-    const queryParams = new URLSearchParams(params).toString()
+    const queryParams = new URLSearchParams(allParams).toString()
     const url = `${baseUrl}/auth/${provider}${queryParams ? '?' + queryParams : ''}`
     
     console.log('Final OAuth URL:', url)
+
+    // Use existing gen_game channel if available, otherwise join it
+    let channel = connection.channels.get('gen_game')
+    if (!channel) {
+      const joinResult = await Connection.joinChannel(connection, 'gen_game', { token: connection.token })
+      channel = joinResult.channel
+    }
+    console.log('Using existing or joined gen_game channel for OAuth flow:', channel)
     
     return new Promise((resolve, reject) => {
-      const popup = window.open(url, 'oauth', 'width=500,height=600,scrollbars=yes,resizable=yes')
+      // Open in new tab instead of popup window
+      const newTab = window.open(url, '_blank')
       
-      if (!popup) {
-        reject(new Error('Popup blocked. Please allow popups for OAuth authentication.'))
+      if (!newTab) {
+        reject(new Error('Tab blocked. Please allow popups/new tabs for OAuth authentication.'))
         return
       }
 
-      console.log('OAuth popup opened successfully')
+      console.log('OAuth tab opened successfully')
+      let resultRef: number
 
-      const messageHandler = (event: MessageEvent) => {
-        console.log('OAuth popup message received:', event.data, 'from origin:', event.origin)
+      // Listen for OAuth result push from WebSocket
+      const oauthResultHandler = (payload: any) => {
+        console.log('OAuth result received via WebSocket:', payload)
         
-        // Security: Verify origin matches our server
-        const expectedOrigin = baseUrl
-        if (event.origin !== expectedOrigin) {
-          console.log('Origin mismatch. Expected:', expectedOrigin, 'Got:', event.origin)
-          return
-        }
-
-        const data = event.data
-        if (data && (data.success !== undefined || data.error)) {
-          console.log('Valid OAuth response received:', data)
-          window.removeEventListener('message', messageHandler)
-          clearInterval(checkClosed)
-          popup.close()
-          
-          if (data.success) {
-            console.log('OAuth success, resolving with:', data)
-            resolve(data)
-          } else {
-            console.log('OAuth error, rejecting with:', data.message || data.error)
-            reject(new Error(data.message || data.error || 'OAuth authentication failed'))
-          }
+        // Remove the event handler
+        channel.off('oauth_result', resultRef)
+        
+        // Don't auto-close the tab - let user close it themselves
+        console.log('OAuth completed, user can close the tab manually')
+        
+        if (payload.success) {
+          console.log('OAuth success, resolving with:', payload)
+          resolve(payload)
         } else {
-          console.log('Received message without success/error fields:', data)
+          console.log('OAuth error, rejecting with:', payload.msg || payload.error)
+          reject(new Error(payload.msg || payload.error || 'OAuth authentication failed'))
         }
       }
 
-      window.addEventListener('message', messageHandler)
-
-      // Check if popup is closed manually
-      const checkClosed = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkClosed)
-          window.removeEventListener('message', messageHandler)
-          reject(new Error('OAuth authentication was cancelled'))
-        }
-      }, 1000)
+      resultRef = channel.on('oauth_result', oauthResultHandler)
     })
   }
 }

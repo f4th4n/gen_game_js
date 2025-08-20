@@ -69,6 +69,20 @@ class Connection {
     connection.token = token
   }
 
+  static async leaveChannel(connection: Connection, topic: string): Promise<void> {
+    const channel = connection.channels.get(topic)
+    if (channel) {
+      channel.leave()
+      connection.channels.delete(topic)
+    }
+  }
+  
+  static async refreshToken(connection: Connection, topic: string, newToken: string): Promise<void> {
+    connection.token = newToken
+    await Connection.leaveChannel(connection, topic)
+    await Connection.joinChannel(connection, topic, { token: newToken })
+  }
+
   /**
    * Make sure connection is established, or throw an error
    * @param connection

@@ -31,6 +31,14 @@ class GenGame {
     return Session.linkGoogle(this.state.connection, token)
   }
 
+  async unlinkGoogle(): Promise<any> {
+    return Session.unlinkGoogle(this.state.connection)
+  }
+
+  async getLinkedProviders(): Promise<any> {
+    return Session.getLinkedProviders(this.state.connection)
+  }
+
   async authenticateGoogle(): Promise<any> {
     return Session.authenticateGoogle(this.state.connection)
   }

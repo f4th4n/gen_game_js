@@ -1391,9 +1391,6 @@ var Connection = class _Connection {
   static setToken(connection, token) {
     connection.token = token;
   }
-  static getCurrentChannel(connection, topic) {
-    return connection.channels.get(topic);
-  }
   static async leaveChannel(connection, topic) {
     const channel = connection.channels.get(topic);
     if (channel) {
@@ -1401,14 +1398,10 @@ var Connection = class _Connection {
       connection.channels.delete(topic);
     }
   }
-  /**
-   * Refresh connection with new token and rejoin authentication-sensitive channels
-   * This handles the complete token switching workflow
-   */
-  static async refreshToken(connection, newToken) {
+  static async refreshToken(connection, topic, newToken) {
     connection.token = newToken;
-    await _Connection.leaveChannel(connection, "public");
-    await _Connection.leaveChannel(connection, "gen_game");
+    await _Connection.leaveChannel(connection, topic);
+    await _Connection.joinChannel(connection, topic, { token: newToken });
   }
   /**
    * Make sure connection is established, or throw an error
@@ -1476,7 +1469,7 @@ var Session = class _Session {
   }
   static async linkGoogle(connection, token) {
     connection_default.guard(connection);
-    return _Session.oauthPopupFlow(connection, "google", { link_mode: "true", token });
+    return _Session.oauthFlow(connection, "google", { link_mode: "true", token });
   }
   static async unlinkGoogle(connection) {
     connection_default.guard(connection);
@@ -1492,9 +1485,9 @@ var Session = class _Session {
   }
   static async authenticateGoogle(connection) {
     connection_default.guard(connection);
-    return _Session.oauthPopupFlow(connection, "google");
+    return _Session.oauthFlow(connection, "google");
   }
-  static async oauthPopupFlow(connection, provider, params = {}) {
+  static async oauthFlow(connection, provider, params = {}) {
     if (!connection.token) {
       throw new Error("Connection token is required for OAuth flow");
     }
@@ -1507,7 +1500,7 @@ var Session = class _Session {
     }
     const baseUrl = urlMatch[1];
     console.log("Extracted base URL:", baseUrl);
-    const allParams = { ...params, oauth_token: connection.token };
+    const allParams = { ...params, token: connection.token };
     const queryParams = new URLSearchParams(allParams).toString();
     const url = `${baseUrl}/auth/${provider}${queryParams ? "?" + queryParams : ""}`;
     console.log("Final OAuth URL:", url);
@@ -1518,27 +1511,24 @@ var Session = class _Session {
     }
     console.log("Using existing or joined gen_game channel for OAuth flow:", channel);
     return new Promise((resolve, reject) => {
-      const popup = window.open(url, "oauth", "width=500,height=600,scrollbars=yes,resizable=yes");
-      if (!popup) {
-        reject(new Error("Popup blocked. Please allow popups for OAuth authentication."));
+      const newTab = window.open(url, "_blank");
+      if (!newTab) {
+        reject(new Error("Tab blocked. Please allow popups/new tabs for OAuth authentication."));
         return;
       }
-      console.log("OAuth popup opened successfully");
+      console.log("OAuth tab opened successfully");
       let resultRef;
       const oauthResultHandler = (payload) => {
         console.log("OAuth result received via WebSocket:", payload);
-        if (!popup.closed) {
-          console.log("Closing popup after receiving OAuth result");
-          popup.close();
-        }
+        channel.off("oauth_result", resultRef);
+        console.log("OAuth completed, user can close the tab manually");
         if (payload.success) {
           console.log("OAuth success, resolving with:", payload);
           resolve(payload);
         } else {
-          console.log("OAuth error, rejecting with:", payload.message || payload.error);
-          reject(new Error(payload.message || payload.error || "OAuth authentication failed"));
+          console.log("OAuth error, rejecting with:", payload.msg || payload.error);
+          reject(new Error(payload.msg || payload.error || "OAuth authentication failed"));
         }
-        channel.off("oauth_result", resultRef);
       };
       resultRef = channel.on("oauth_result", oauthResultHandler);
     });

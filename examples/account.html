@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GenGame - Account</title>
+  </head>
+  <body>
+    <div style="margin: 20px; padding: 20px; border: 1px solid #ccc;">
+      <h3>Account Management</h3>
+      <div id="login-state" style="margin-bottom: 15px;"></div>
+
+      <div style="margin-bottom: 10px;">
+        <label>Username: <input type="text" id="username-input" placeholder="Enter username" value="kopi" /></label>
+      </div>
+
+      <div style="margin-bottom: 15px;">
+        <button id="create-account">Create New Account</button>
+      </div>
+
+      <div style="margin-bottom: 10px;">
+        <h4>Sign In to Existing Account</h4>
+        <label>Username: <input type="text" id="signin-username" placeholder="Username" value="kopi" /></label>
+      </div>
+
+      <div style="margin-bottom: 15px;">
+        <button id="signin-account">Sign In to Account</button>
+      </div>
+
+      <h4>OAuth Management</h4>
+      <button id="link-google">Link Google</button>
+      <button id="unlink-google">Unlink Google</button>
+      <button id="auth-google">Login with Google</button>
+      <button id="refresh-providers">Refresh Providers</button>
+
+      <div id="oauth-status" style="margin-top: 15px;"></div>
+      <div id="linked-providers" style="margin-top: 10px; padding: 10px; background-color: #f5f5f5;"></div>
+    </div>
+
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.js"
+      integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+      crossorigin="anonymous"
+    ></script>
+    <script type="module" src="./src/pages/account.ts"></script>
+  </body>
+</html>

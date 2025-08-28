@@ -2,6 +2,6 @@
 export default {
   // config options
   server: {
-    open: '/dev.html',
+    open: '/examples/dev.html',
   },
 }

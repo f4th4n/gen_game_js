@@ -34,32 +34,9 @@ function initAccountPage(genGame: GenGame) {
     isLoggedIn: false
   }
 
-  const updateLoginState = (username: string, hasAccount: boolean, isLoggedIn: boolean) => {
-    currentLoginState = { username, hasAccount, isLoggedIn }
-    renderLoginState(currentLoginState)
-  }
-
-  const checkAccountGoogleLinkStatus = async () => {
-    if (!accountToken) return false
-    try {
-      const result = await genGame.getLinkedProviders()
-      linkedProviders = (result as any)?.linked_providers || []
-      updateLinkedProvidersDisplay(linkedProviders)
-      return linkedProviders.includes('google')
-    } catch (error) {
-      console.error('Failed to check OAuth links:', error)
-      return false
-    }
-  }
-
-  const updateButtonStates = async () => {
-    const isGoogleLinked = await checkAccountGoogleLinkStatus()
-    setButtonStates({ accountToken, deviceToken, isGoogleLinked })
-  }
-
   $(async () => {
-    deviceToken = await genGame.authenticateDevice('kopi')
-    updateLoginState('kopi', false, false) // Initial device state
+    deviceToken = await genGame.authenticateDevice(DEFAULT_USERNAME)
+    updateLoginState(DEFAULT_USERNAME, false, false) // Initial device state
     await updateButtonStates()
     updateLinkedProvidersDisplay(linkedProviders)
 
@@ -204,4 +181,27 @@ function initAccountPage(genGame: GenGame) {
       }
     })
   })
+
+  function updateLoginState(username: string, hasAccount: boolean, isLoggedIn: boolean) {
+    currentLoginState = { username, hasAccount, isLoggedIn }
+    renderLoginState(currentLoginState)
+  }
+
+  async function checkAccountGoogleLinkStatus() {
+    if (!accountToken) return false
+    try {
+      const result = await genGame.getLinkedProviders()
+      linkedProviders = (result as any)?.linked_providers || []
+      updateLinkedProvidersDisplay(linkedProviders)
+      return linkedProviders.includes('google')
+    } catch (error) {
+      console.error('Failed to check OAuth links:', error)
+      return false
+    }
+  }
+
+  async function updateButtonStates() {
+    const isGoogleLinked = await checkAccountGoogleLinkStatus()
+    setButtonStates({ accountToken, deviceToken, isGoogleLinked })
+  }
 }

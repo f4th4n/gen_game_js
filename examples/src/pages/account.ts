@@ -1,5 +1,14 @@
 import Connection from "../../../src/connection"
 import GenGame from "../../../src/gen_game"
+import {
+  renderLoginState,
+  updateLinkedProvidersDisplay,
+  setButtonStates,
+  getUsernameInput,
+  getSigninUsername,
+  showStatus,
+  LoginState
+} from './account/ui'
 
 
 const DEFAULT_USERNAME = 'kopi'
@@ -19,7 +28,7 @@ function initAccountPage(genGame: GenGame) {
   let deviceToken: string | undefined
   let accountToken: string | undefined
   let linkedProviders: string[] = []
-  let currentLoginState = {
+  let currentLoginState: LoginState = {
     username: DEFAULT_USERNAME,
     hasAccount: false,
     isLoggedIn: false
@@ -27,29 +36,7 @@ function initAccountPage(genGame: GenGame) {
 
   const updateLoginState = (username: string, hasAccount: boolean, isLoggedIn: boolean) => {
     currentLoginState = { username, hasAccount, isLoggedIn }
-    updateLoginDisplay()
-  }
-
-  const updateLoginDisplay = () => {
-    const loginDiv = $('#login-state')
-    const statusColor = currentLoginState.isLoggedIn ? '#28a745' : '#6c757d'
-    loginDiv.html(`
-      <div style="padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
-        <strong>Login State:</strong><br>
-        <span style="color: ${statusColor};">Username: ${currentLoginState.username}</span><br>
-        <span>Has Account: ${currentLoginState.hasAccount ? 'Yes' : 'No'}</span><br>
-        <span>Status: ${currentLoginState.isLoggedIn ? 'Logged In' : 'Device Only'}</span>
-      </div>
-    `)
-  }
-
-  const updateLinkedProvidersDisplay = () => {
-    const providersDiv = $('#linked-providers')
-    if (linkedProviders.length === 0) {
-      providersDiv.html('<strong>Linked Providers:</strong> None')
-    } else {
-      providersDiv.html(`<strong>Linked Providers:</strong> ${linkedProviders.join(', ')}`)
-    }
+    renderLoginState(currentLoginState)
   }
 
   const checkAccountGoogleLinkStatus = async () => {
@@ -57,7 +44,7 @@ function initAccountPage(genGame: GenGame) {
     try {
       const result = await genGame.getLinkedProviders()
       linkedProviders = (result as any)?.linked_providers || []
-      updateLinkedProvidersDisplay()
+      updateLinkedProvidersDisplay(linkedProviders)
       return linkedProviders.includes('google')
     } catch (error) {
       console.error('Failed to check OAuth links:', error)
@@ -66,44 +53,21 @@ function initAccountPage(genGame: GenGame) {
   }
 
   const updateButtonStates = async () => {
-    const linkButton = $('#link-google')
-    const unlinkButton = $('#unlink-google')
-
-    if (!accountToken) {
-      if (deviceToken) {
-        linkButton.prop('disabled', true).text('Link Google (Create Account First)')
-        unlinkButton.prop('disabled', true).text('Unlink Google (No Account)')
-      } else {
-        linkButton.prop('disabled', true).text('Link Google (No Token)')
-        unlinkButton.prop('disabled', true).text('Unlink Google (No Token)')
-      }
-      return
-    }
-
     const isGoogleLinked = await checkAccountGoogleLinkStatus()
-
-    if (isGoogleLinked) {
-      linkButton.prop('disabled', true).text('Link Google (Already Linked)')
-      unlinkButton.prop('disabled', false).text('Unlink Google')
-    } else {
-      linkButton.prop('disabled', false).text('Link Google')
-      unlinkButton.prop('disabled', true).text('Unlink Google (Not Linked)')
-    }
+    setButtonStates({ accountToken, deviceToken, isGoogleLinked })
   }
 
-  // Expect the account UI elements to already exist on the page.
-  // Initialize login state and button states once DOM is ready.
   $(async () => {
     deviceToken = await genGame.authenticateDevice('kopi')
     updateLoginState('kopi', false, false) // Initial device state
     await updateButtonStates()
-    updateLinkedProvidersDisplay()
+    updateLinkedProvidersDisplay(linkedProviders)
 
     $('#create-account').on('click', async () => {
       try {
-        const username = $('#username-input').val()?.toString().trim()
+        const username = getUsernameInput()
         if (!username) {
-          $('#oauth-status').html('<p>Error: Please enter a username</p>')
+          showStatus('Error: Please enter a username')
           return
         }
 
@@ -111,7 +75,7 @@ function initAccountPage(genGame: GenGame) {
           username: username,
           display_name: username
         })
-        $('#oauth-status').html('<p>Account created: ' + JSON.stringify(account) + '</p>')
+        showStatus('Account created: ' + JSON.stringify(account))
 
         // Create session token for the new account
         const { channel } = await Connection.joinChannel(genGame.state.connection, 'public')
@@ -121,29 +85,25 @@ function initAccountPage(genGame: GenGame) {
         // Refresh connection with new token
         await Connection.refreshToken(genGame.state.connection, 'gen_game', token)
 
-        // Update login state
         updateLoginState(username, true, true)
 
-        $('#oauth-status').append('<p>Account token created and logged in successfully!</p>')
+        showStatus('Account token created and logged in successfully!', true)
         await updateButtonStates()
 
-      } catch (error:any) {
+      } catch (error: any) {
         console.error('Create account error:', error)
-        $('#oauth-status').html('<p>Error: ' + (error.msg || error.message || JSON.stringify(error)) + '</p>')
+        showStatus('Error: ' + (error.msg || error.message || JSON.stringify(error)))
       }
     })
 
     $('#signin-account').on('click', async () => {
-      const username = $('#signin-username').val()?.toString().trim()
+      const username = getSigninUsername()
 
       if (!username) {
-        updateLoginDisplay()
         return
       }
 
       try {
-        updateLoginDisplay()
-
         const { channel } = await Connection.joinChannel(genGame.state.connection, 'public')
         const { token } = (await Connection.send(channel, 'create_session', { username: username })) as any
         accountToken = token
@@ -151,17 +111,12 @@ function initAccountPage(genGame: GenGame) {
         // Refresh connection with new token
         await Connection.refreshToken(genGame.state.connection, 'gen_game', token)
 
-        // Update login state
         updateLoginState(username, true, false)
-
-        updateLoginDisplay()
-        $('#signin-username').val('')
 
         await updateButtonStates()
 
-      } catch (error:any) {
+      } catch (error: any) {
         console.error('Sign in error:', error)
-        updateLoginDisplay()
       }
     })
 
@@ -179,12 +134,12 @@ function initAccountPage(genGame: GenGame) {
 
       try {
         const result = await genGame.linkGoogle(accountToken)
-        $('#oauth-status').html('<p>Google linked successfully!</p>')
-        $('#oauth-status').append('<p>Result: ' + JSON.stringify(result) + '</p>')
+        showStatus('Google linked successfully!')
+        showStatus('Result: ' + JSON.stringify(result), true)
         await updateButtonStates()
       } catch (error: any) {
         console.error('Link error:', error)
-        $('#oauth-status').html('<p>Link error: ' + (error.message || JSON.stringify(error)) + '</p>')
+        showStatus('Link error: ' + (error.message || JSON.stringify(error)))
       }
     })
 
@@ -199,16 +154,16 @@ function initAccountPage(genGame: GenGame) {
 
           updateLoginState(result.account.username, true, true)
 
-          $('#oauth-status').html('<p>Google auth successful! Token: ' + result.token.substring(0, 20) + '...</p>')
-          $('#oauth-status').append('<p>Account: ' + JSON.stringify(result.account) + '</p>')
+          showStatus('Google auth successful! Token: ' + result.token.substring(0, 20) + '...', false)
+          showStatus('Account: ' + JSON.stringify(result.account), true)
 
           await updateButtonStates()
         } else {
-          $('#oauth-status').html('<p>Google auth failed: ' + ((result && result.msg) || 'Unknown error') + '</p>')
+          showStatus('Google auth failed: ' + ((result && result.msg) || 'Unknown error'))
         }
       } catch (error: any) {
         console.error('Google auth error:', error)
-        $('#oauth-status').html('<p>Auth error: ' + (error.message || JSON.stringify(error)) + '</p>')
+        showStatus('Auth error: ' + (error.message || JSON.stringify(error)))
       }
     })
 
@@ -224,12 +179,12 @@ function initAccountPage(genGame: GenGame) {
 
       try {
         const result = await genGame.unlinkGoogle()
-        $('#oauth-status').html('<p>Google unlinked successfully!</p>')
-        $('#oauth-status').append('<p>Result: ' + JSON.stringify(result) + '</p>')
+        showStatus('Google unlinked successfully!')
+        showStatus('Result: ' + JSON.stringify(result), true)
         await updateButtonStates()
       } catch (error: any) {
         console.error('Unlink error:', error)
-        $('#oauth-status').html('<p>Unlink error: ' + (error.message || JSON.stringify(error)) + '</p>')
+        showStatus('Unlink error: ' + (error.message || JSON.stringify(error)))
       }
     })
 
@@ -242,10 +197,10 @@ function initAccountPage(genGame: GenGame) {
       try {
         await checkAccountGoogleLinkStatus()
         await updateButtonStates()
-        $('#oauth-status').html('<p>Provider list refreshed!</p>')
+        showStatus('Provider list refreshed!')
       } catch (error: any) {
         console.error('Refresh error:', error)
-        $('#oauth-status').html('<p>Refresh error: ' + (error.message || JSON.stringify(error)) + '</p>')
+        showStatus('Refresh error: ' + (error.message || JSON.stringify(error)))
       }
     })
   })

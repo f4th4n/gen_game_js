@@ -1356,7 +1356,7 @@ var Socket = class {
 };
 
 // src/connection.ts
-var Connection = class {
+var Connection = class _Connection {
   constructor(host, port, protocol) {
     this.channels = /* @__PURE__ */ new Map();
     const endpoint = `${protocol}://${host}:${port}/game`;
@@ -1390,6 +1390,18 @@ var Connection = class {
   }
   static setToken(connection, token) {
     connection.token = token;
+  }
+  static async leaveChannel(connection, topic) {
+    const channel = connection.channels.get(topic);
+    if (channel) {
+      channel.leave();
+      connection.channels.delete(topic);
+    }
+  }
+  static async refreshToken(connection, topic, newToken) {
+    connection.token = newToken;
+    await _Connection.leaveChannel(connection, topic);
+    await _Connection.joinChannel(connection, topic, { token: newToken });
   }
   /**
    * Make sure connection is established, or throw an error
@@ -1442,12 +1454,84 @@ var Game = class {
 var game_default = Game;
 
 // src/session.ts
-var Session = class {
+var Session = class _Session {
   static async authenticateDevice(connection, deviceId) {
     const { channel } = await connection_default.joinChannel(connection, "public");
     const { token } = await connection_default.send(channel, "create_session", { username: deviceId });
     connection_default.setToken(connection, token);
     return token;
+  }
+  static async createAccount(connection, params) {
+    connection_default.guard(connection);
+    const { channel } = await connection_default.joinChannel(connection, "gen_game", { token: connection.token });
+    const account = await connection_default.send(channel, "create_account", params);
+    return account;
+  }
+  static async linkGoogle(connection, token) {
+    connection_default.guard(connection);
+    return _Session.oauthFlow(connection, "google", { link_mode: "true", token });
+  }
+  static async unlinkGoogle(connection) {
+    connection_default.guard(connection);
+    const { channel } = await connection_default.joinChannel(connection, "gen_game", { token: connection.token });
+    const response = await connection_default.send(channel, "unlink_oauth_provider", { provider: "google" });
+    return response;
+  }
+  static async getLinkedProviders(connection) {
+    connection_default.guard(connection);
+    const { channel } = await connection_default.joinChannel(connection, "gen_game", { token: connection.token });
+    const response = await connection_default.send(channel, "list_oauth_links", {});
+    return response;
+  }
+  static async authenticateGoogle(connection) {
+    connection_default.guard(connection);
+    return _Session.oauthFlow(connection, "google");
+  }
+  static async oauthFlow(connection, provider, params = {}) {
+    if (!connection.token) {
+      throw new Error("Connection token is required for OAuth flow");
+    }
+    const wsUrl = connection.socket.endPointURL();
+    console.log("WebSocket URL:", wsUrl);
+    const urlMatch = wsUrl.match(/^(https?:\/\/[^\/]+)/);
+    if (!urlMatch) {
+      console.error("Failed to parse WebSocket URL:", wsUrl);
+      throw new Error(`Invalid WebSocket URL: ${wsUrl}`);
+    }
+    const baseUrl = urlMatch[1];
+    console.log("Extracted base URL:", baseUrl);
+    const allParams = { ...params, token: connection.token };
+    const queryParams = new URLSearchParams(allParams).toString();
+    const url = `${baseUrl}/auth/${provider}${queryParams ? "?" + queryParams : ""}`;
+    console.log("Final OAuth URL:", url);
+    let channel = connection.channels.get("gen_game");
+    if (!channel) {
+      const joinResult = await connection_default.joinChannel(connection, "gen_game", { token: connection.token });
+      channel = joinResult.channel;
+    }
+    console.log("Using existing or joined gen_game channel for OAuth flow:", channel);
+    return new Promise((resolve, reject) => {
+      const newTab = window.open(url, "_blank");
+      if (!newTab) {
+        reject(new Error("Tab blocked. Please allow popups/new tabs for OAuth authentication."));
+        return;
+      }
+      console.log("OAuth tab opened successfully");
+      let resultRef;
+      const oauthResultHandler = (payload) => {
+        console.log("OAuth result received via WebSocket:", payload);
+        channel.off("oauth_result", resultRef);
+        console.log("OAuth completed, user can close the tab manually");
+        if (payload.success) {
+          console.log("OAuth success, resolving with:", payload);
+          resolve(payload);
+        } else {
+          console.log("OAuth error, rejecting with:", payload.msg || payload.error);
+          reject(new Error(payload.msg || payload.error || "OAuth authentication failed"));
+        }
+      };
+      resultRef = channel.on("oauth_result", oauthResultHandler);
+    });
   }
 };
 var session_default = Session;
@@ -1467,6 +1551,21 @@ var GenGame = class {
   }
   async authenticateDevice(deviceId) {
     return session_default.authenticateDevice(this.state.connection, deviceId);
+  }
+  async createAccount(params) {
+    return session_default.createAccount(this.state.connection, params);
+  }
+  async linkGoogle(token) {
+    return session_default.linkGoogle(this.state.connection, token);
+  }
+  async unlinkGoogle() {
+    return session_default.unlinkGoogle(this.state.connection);
+  }
+  async getLinkedProviders() {
+    return session_default.getLinkedProviders(this.state.connection);
+  }
+  async authenticateGoogle() {
+    return session_default.authenticateGoogle(this.state.connection);
   }
   async createMatch() {
     return game_default.createMatch(this.state.connection, this.state);

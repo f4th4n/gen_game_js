@@ -13,6 +13,8 @@ declare class Connection {
     }>;
     static send(channel: Channel, event: string, payload: object, withReply?: boolean): Promise<Message | null>;
     static setToken(connection: Connection, token: string): void;
+    static leaveChannel(connection: Connection, topic: string): Promise<void>;
+    static refreshToken(connection: Connection, topic: string, newToken: string): Promise<void>;
     /**
      * Make sure connection is established, or throw an error
      * @param connection
@@ -26,6 +28,15 @@ declare class GenGame {
     constructor(host: string, port: number, protocol?: string);
     connect(): Promise<void>;
     authenticateDevice(deviceId: string): Promise<any>;
+    createAccount(params: {
+        username: string;
+        display_name?: string;
+        [key: string]: any;
+    }): Promise<any>;
+    linkGoogle(token: string): Promise<any>;
+    unlinkGoogle(): Promise<any>;
+    getLinkedProviders(): Promise<any>;
+    authenticateGoogle(): Promise<any>;
     createMatch(): Promise<Match>;
     joinMatch(matchId: string): Promise<Match>;
     onChangeState(callback: Function): Promise<void>;
